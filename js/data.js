@@ -41,4 +41,4 @@ const DEFAULT_MARKERS = [
   }
 ];
 
-const STORAGE_KEY = 'donggwoldo_markers_v1';
+const STORAGE_KEY = 'donggwoldo_markers_v2';
