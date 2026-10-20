@@ -80,20 +80,25 @@ let view = { x: 0, y: 0, scale: 1 };
 // ============================================================
 // 데이터 로드 & 로컬스토리지 동기화
 // ============================================================
-function loadMarkers() {
+async function loadMarkers() {
+  // 1. Supabase 클라우드 DB에서 먼저 조회
+  const remote = await dbFetchMarkers();
+  if (remote && remote.length > 0) {
+    markers = remote;
+    saveMarkers(); // 로컬에도 캐시 보관
+    renderMarkers();
+    return;
+  }
+
+  // 2. 오프라인이거나 DB 실패 시 기존 LocalStorage 사용
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      markers = JSON.parse(raw);
-    } else {
-      markers = [...DEFAULT_MARKERS];
-      saveMarkers();
-    }
+    markers = raw ? JSON.parse(raw) : [...DEFAULT_MARKERS];
   } catch (err) {
-    console.error('Failed to load markers:', err);
     markers = [...DEFAULT_MARKERS];
   }
   updateMarkerCount();
+  renderMarkers();
 }
 
 function saveMarkers() {
@@ -405,6 +410,7 @@ deletePlaceBtn.addEventListener('click', () => {
   if (!m) return;
   if (confirm(`'${m.name}' 장소를 정말 삭제하시겠습니까?`)) {
     markers = markers.filter(item => item.id !== selectedMarkerId);
+    dbDeleteMarker(selectedMarkerId);
     saveMarkers();
     closePanel();
     renderMarkers();
@@ -486,6 +492,7 @@ placeForm.addEventListener('submit', (e) => {
     const idx = markers.findIndex(m => m.id === id);
     if (idx !== -1) {
       markers[idx] = { ...markers[idx], name, hanja, cat, period, desc, x, y };
+      dbUpdateMarker(markers[idx]);
       saveMarkers();
       showToast(`'${name}' 정보가 수정되었습니다.`);
       selectMarker(markers[idx]);
@@ -503,6 +510,7 @@ placeForm.addEventListener('submit', (e) => {
       y
     };
     markers.push(newPlace);
+    dbInsertMarker(newPlace);
     saveMarkers();
     showToast(`새로운 장소 '${name}'이(가) 등록되었습니다!`);
     selectMarker(newPlace);
@@ -675,3 +683,17 @@ window.addEventListener('keydown', (e) => {
 // ============================================================
 loadMarkers();
 renderMarkers();
+
+// 안내 모달 이벤트
+const openInfoBtn = document.getElementById('openInfoBtn');
+const infoModal = document.getElementById('infoModal');
+const infoModalCloseBtn = document.getElementById('infoModalCloseBtn');
+const infoModalConfirmBtn = document.getElementById('infoModalConfirmBtn');
+
+function openInfoModal() { if (infoModal) infoModal.style.display = 'flex'; }
+function closeInfoModal() { if (infoModal) infoModal.style.display = 'none'; }
+
+if (openInfoBtn) openInfoBtn.addEventListener('click', openInfoModal);
+if (infoModalCloseBtn) infoModalCloseBtn.addEventListener('click', closeInfoModal);
+if (infoModalConfirmBtn) infoModalConfirmBtn.addEventListener('click', closeInfoModal);
+if (infoModal) infoModal.addEventListener('click', (e) => { if (e.target === infoModal) closeInfoModal(); });

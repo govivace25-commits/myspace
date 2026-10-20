@@ -29,6 +29,11 @@
         <span class="text">목록 보기</span>
       </button>
 
+      <button id="openInfoBtn" class="btn btn-secondary" title="동궐도 아카이브 안내">
+        <span class="icon">ℹ️</span>
+        <span class="text">안내</span>
+      </button>
+
       <div class="dropdown">
         <button id="dataMenuBtn" class="btn btn-icon" title="데이터 관리">
           <span class="icon">⚙️</span>
@@ -183,9 +188,52 @@
     </div>
   </div>
 
+  <!-- 프로젝트 안내 모달 -->
+  <div id="infoModal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card info-modal-card">
+      <div class="modal-header">
+        <h3>🏛️ 동궐도 아카이브 안내</h3>
+        <button id="infoModalCloseBtn" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body info-modal-body">
+        <section class="info-section">
+          <h4 class="info-title">🎯 기획 의도</h4>
+          <p class="info-desc">
+            조선의 국보 <strong>동궐도(東闕圖)</strong> 속 전각과 궁문, 길과 다리를 현대적인 인터랙티브 지도로 재해석한 아카이브입니다.
+            원하는 위치를 클릭하여 건물명, 한자 표기, 건축 시기, 역사적 유래를 손쉽게 기록하고 누구나 직관적으로 탐색할 수 있습니다.
+          </p>
+        </section>
+
+        <section class="info-section">
+          <h4 class="info-title">✨ 핵심 기능</h4>
+          <ul class="info-feature-list">
+            <li><strong>📍 새 장소 등록 모드</strong> : 상단 버튼 클릭 후 지도 위 원하는 위치를 클릭해 새로운 건물이나 도로를 등록합니다.</li>
+            <li><strong>📝 상세 정보 기록</strong> : 구분(건물·문·도로·기타), 한글명, 한자, 건축/조성 시기, 상세 유래를 체계적으로 작성합니다.</li>
+            <li><strong>📜 목록 탐색기 (드로어)</strong> : 등록된 모든 장소를 검색 및 유형별 필터링할 수 있으며, 클릭 시 해당 위치로 부드럽게 자동 이동합니다.</li>
+            <li><strong>📖 서책 스타일 상세 패널</strong> : 마커 클릭 시 궁궐의 고풍스러운 한지 서책 디자인으로 상세 정보를 열람하고 수정·삭제할 수 있습니다.</li>
+            <li><strong>💾 데이터 보존 & 백업</strong> : 등록된 데이터는 안전하게 보관되며, JSON 파일로 내보내기/불러오기가 가능합니다.</li>
+          </ul>
+        </section>
+
+        <section class="info-section author-section">
+          <h4 class="info-title">👤 기획 및 작성자</h4>
+          <p class="author-info">
+            <strong>궁궐해설사 김지원</strong> (<a href="mailto:jiwonkim725@gmail.com">jiwonkim725@gmail.com</a>)
+          </p>
+        </section>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="infoModalConfirmBtn" class="btn btn-primary" style="width: 100%;">확인</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 토스트 알림 메시지 -->
   <div id="toast" class="toast"></div>
 
+  <!-- Supabase JS 라이브러리 CDN & 클라이언트 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
 </body>
