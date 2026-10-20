@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>동궐도 (東闕圖) 인터랙티브 아카이브</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 상단 헤더 툴바 -->
+  <header id="header">
+    <div class="brand">
+      <span class="brand-hanja">東闕圖</span>
+      <h1 class="brand-title">동궐도 아카이브</h1>
+      <span class="marker-count" id="markerCountBadge">3개 등록됨</span>
+    </div>
+
+    <div class="toolbar-actions">
+      <button id="addModeBtn" class="btn btn-primary" title="지도 위 원하는 곳을 클릭하여 건물이나 도로를 추가합니다">
+        <span class="icon">📍</span>
+        <span class="text">새 장소 등록</span>
+      </button>
+
+      <button id="openListBtn" class="btn btn-secondary">
+        <span class="icon">📜</span>
+        <span class="text">목록 보기</span>
+      </button>
+
+      <div class="dropdown">
+        <button id="dataMenuBtn" class="btn btn-icon" title="데이터 관리">
+          <span class="icon">⚙️</span>
+        </button>
+        <div class="dropdown-content" id="dataDropdown">
+          <button id="exportJsonBtn">💾 데이터 백업 (JSON 다운로드)</button>
+          <label for="importJsonInput" class="dropdown-label">
+            📂 데이터 복원 (JSON 파일 불러오기)
+            <input type="file" id="importJsonInput" accept=".json" style="display:none">
+          </label>
+          <div class="dropdown-divider"></div>
+          <button id="resetDataBtn" class="danger-text">⚠️ 기본 데이터로 초기화</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 등록 모드 활성화 안내 배너 -->
+  <div id="addModeBanner" class="add-mode-banner">
+    <span class="pulse-dot"></span>
+    <span><strong>장소 추가 모드 ON</strong> : 지도 위 등록할 건물이나 도로 위치를 클릭해주세요.</span>
+    <button id="cancelAddModeBtn" class="btn btn-sm btn-ghost">취소 (ESC)</button>
+  </div>
+
+  <!-- 지도 뷰어 -->
+  <div id="viewer">
+    <div id="stage">
+      <img id="mapImg" src="assets/map.jpg" alt="동궐도" draggable="false">
+      <!-- 동적 마커들이 여기에 렌더링됩니다 -->
+      <div id="markersLayer"></div>
+      <!-- 추가 모드 시 임시 핀 -->
+      <div id="tempPin" class="temp-pin" style="display:none;"></div>
+    </div>
+
+    <!-- 줌 컨트롤러 (플로팅) -->
+    <div class="zoom-controls">
+      <button id="zoomInBtn" title="확대 (+)">+</button>
+      <button id="zoomResetBtn" title="화면 맞춤">⛶</button>
+      <button id="zoomOutBtn" title="축소 (-)">−</button>
+    </div>
+
+    <!-- 미니 가이드 -->
+    <div class="map-hint">
+      마우스 드래그: 이동 | 휠: 확대/축소
+    </div>
+  </div>
+
+  <!-- 상세 정보 사이드 패널 -->
+  <aside id="panel" class="side-panel">
+    <div class="panel-header">
+      <span id="panelCategory" class="badge">건물</span>
+      <button id="panelClose" class="btn-close" aria-label="닫기">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="title-group">
+        <h2 id="panelName">인정전</h2>
+        <span id="panelHanja" class="hanja-sub">仁政殿</span>
+      </div>
+
+      <div class="meta-section">
+        <div class="meta-item">
+          <span class="meta-label">건축 / 조성 시기</span>
+          <p id="panelPeriod" class="meta-value">태종 5년 (1405년)</p>
+        </div>
+      </div>
+
+      <div class="meta-section">
+        <span class="meta-label">상세 설명</span>
+        <div id="panelDesc" class="panel-desc"></div>
+      </div>
+    </div>
+
+    <div class="panel-footer">
+      <button id="editPlaceBtn" class="btn btn-outline">✏️ 수정</button>
+      <button id="deletePlaceBtn" class="btn btn-danger-outline">🗑️ 삭제</button>
+    </div>
+  </aside>
+
+  <!-- 목록 탐색기 드로어 -->
+  <aside id="listDrawer" class="list-drawer">
+    <div class="drawer-header">
+      <h3>🏛️ 등록된 장소 목록</h3>
+      <button id="listDrawerClose" class="btn-close">✕</button>
+    </div>
+    <div class="drawer-search">
+      <input type="text" id="searchInput" placeholder="이름, 한자, 설명으로 검색...">
+      <div class="filter-chips">
+        <button class="chip active" data-filter="all">전체</button>
+        <button class="chip" data-filter="건물">건물</button>
+        <button class="chip" data-filter="문">문</button>
+        <button class="chip" data-filter="도로">도로·다리</button>
+        <button class="chip" data-filter="기타">기타</button>
+      </div>
+    </div>
+    <ul id="placeListContainer" class="place-list">
+      <!-- 동적 생성 -->
+    </ul>
+  </aside>
+
+  <!-- 등록 / 수정 모달 다이얼로그 -->
+  <div id="placeModal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle">새 장소 등록</h3>
+        <button id="modalCloseBtn" class="btn-close">✕</button>
+      </div>
+      <form id="placeForm" class="modal-body">
+        <input type="hidden" id="formId">
+        <input type="hidden" id="formX">
+        <input type="hidden" id="formY">
+
+        <div class="form-row">
+          <label for="formCat">구분 <span class="required">*</span></label>
+          <select id="formCat" required>
+            <option value="건물">건물 (전각·당·루)</option>
+            <option value="문">문 (궁문·대문)</option>
+            <option value="도로">도로 (어도·길·다리)</option>
+            <option value="기타">기타 (정원·수목·우물)</option>
+          </select>
+        </div>
+
+        <div class="form-row grid-2">
+          <div>
+            <label for="formName">이름 (한글) <span class="required">*</span></label>
+            <input type="text" id="formName" placeholder="예: 인정전, 돈화문" required>
+          </div>
+          <div>
+            <label for="formHanja">한자 표기</label>
+            <input type="text" id="formHanja" placeholder="예: 仁政殿">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="formPeriod">건축 / 조성 시기 <span class="required">*</span></label>
+          <input type="text" id="formPeriod" placeholder="예: 태종 5년 (1405년), 광해군 3년 재건 등" required>
+        </div>
+
+        <div class="form-row">
+          <label for="formDesc">설명</label>
+          <textarea id="formDesc" rows="4" placeholder="해당 건물이나 도로의 용도, 역사적 유래, 주요 사건 등을 적어주세요."></textarea>
+        </div>
+
+        <div class="coord-info" id="formCoordsDisplay">
+          위치: 가로 0%, 세로 0%
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="modalCancelBtn" class="btn btn-secondary">취소</button>
+          <button type="submit" class="btn btn-primary" id="modalSubmitBtn">저장하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 메시지 -->
+  <div id="toast" class="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
