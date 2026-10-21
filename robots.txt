@@ -1,0 +1,6 @@
+# robots.txt for Donggwoldo Interactive Map Archive
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://myspace-swart-psi.vercel.app/sitemap.xml
