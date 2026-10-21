@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://myspace-swart-psi.vercel.app/sitemap.xml
+Sitemap: https://donggwoldo.vercel.app/sitemap.xml
