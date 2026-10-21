@@ -81,22 +81,32 @@ let view = { x: 0, y: 0, scale: 1 };
 // 데이터 로드 & 로컬스토리지 동기화
 // ============================================================
 async function loadMarkers() {
-  // 1. Supabase 클라우드 DB에서 먼저 조회
+  // 1. Supabase 클라우드 DB에서 조회
   const remote = await dbFetchMarkers();
-  if (remote && remote.length > 0) {
+
+  // 최신 데이터(선정전 포함 4개)가 있는지 확인
+  const hasModernData = remote && remote.some(m => m.id && m.id.startsWith('m_'));
+
+  if (hasModernData) {
     markers = remote;
-    saveMarkers(); // 로컬에도 캐시 보관
-    renderMarkers();
-    return;
+  } else {
+    // DB에 옛날 3개만 있거나 비어있으면 -> 무조건 최신 4개(DEFAULT_MARKERS) 사용!
+    markers = [...DEFAULT_MARKERS];
+
+    // Supabase DB의 옛날 데이터를 정리하고 새 4개로 자동 동기화
+    if (remote && remote.length > 0) {
+      for (const oldM of remote) {
+        if (oldM.id && !oldM.id.startsWith('m_')) {
+          await dbDeleteMarker(oldM.id);
+        }
+      }
+    }
+    for (const newM of DEFAULT_MARKERS) {
+      await dbInsertMarker(newM);
+    }
   }
 
-  // 2. 오프라인이거나 DB 실패 시 기존 LocalStorage 사용
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    markers = raw ? JSON.parse(raw) : [...DEFAULT_MARKERS];
-  } catch (err) {
-    markers = [...DEFAULT_MARKERS];
-  }
+  saveMarkers();
   updateMarkerCount();
   renderMarkers();
 }
